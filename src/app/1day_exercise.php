@@ -11,6 +11,18 @@ $app->get('/1day/tutorial',function($request,$response,$args) {
     return $this->view->render($response,'chapter2.twig',['messages' => $results]);
 });
 
+$app->get('/1day/chapter3-1/preprocessing',function($request,$response,$args) {
+    $con = $this->get('pdo');
+
+    $sth = $con->prepare('alter table messages add index user_id(user_id)');
+    $sth->execute();
+    $sth = $con->prepare('alter table follows add index user_id(user_id)');
+    $sth->execute();
+    $sth = $con->prepare('alter table follows add index follow_user_id(follow_user_id)');
+    $sth->execute();
+    echo "The preprocessing of chapter3-1 has been completed!";
+});
+
 $app->get('/1day/chapter3-1',function($request,$response,$args) {
 
     $id = mt_rand(1,100000);
@@ -53,6 +65,14 @@ $app->get('/1day/chapter3-1',function($request,$response,$args) {
     return $this->view->render($response,'chapter2.twig',['user' => $user,'message_count' => $message_count,'follow' => $follow,'follower' => $follower,'messages' => $messages]);
 });
 
+$app->get('/1day/chapter3-2/preprocessing',function($request,$response,$args) {
+    $con = $this->get('pdo');
+    $sql = 'alter table messages add index title_created_at(title, created_at)';
+    $sth = $con->prepare($sql);
+    $sth->execute();
+    echo "The preprocessing of chapter3-2 has been completed!";
+});
+
 $app->get('/1day/chapter3-2',function($request,$response,$args) {
     $con = $this->get('pdo');
     $sql = 'select * from messages where title = ? order by created_at desc limit 10';
@@ -84,7 +104,7 @@ $app->get('/1day/chapter5/preprocessing', function($request, $response, $args) {
             )';
     $sth = $con->prepare($sql);
     $sth->execute();
-    echo "Preprocessing has been completed!";
+    echo "The preprocessing of chapter5 has been completed!";
 });
 
 $app->get('/1day/chapter5',function($request,$response,$args) {
@@ -152,7 +172,7 @@ $app->get('/1day/chapter8/preprocessing',function($request,$response,$args) {
     if($check->rowCount() == 0) {
         $sth = $con->prepare('alter table users add index sex_birthday(sex, birthday)');
         $sth->execute();
-        echo "Preprocessing has been completed!";
+        echo "The preprocessing of chapter8 has been completed!";
     } else {
         echo "No preprocessing has been executed.";
     }
