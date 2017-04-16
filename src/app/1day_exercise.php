@@ -117,9 +117,17 @@ $app->get('/1day/chapter5',function($request,$response,$args) {
 
 $app->get('/1day/chapter6',function($request,$response,$args) {
     $con = $this->get('pdo');
-    $sql = 'select * from users order by rand() limit 10';
+    $sql = 'select id from users';
     $sth = $con->prepare($sql);
     $sth->execute();
+    $ids = $sth->fetchAll(PDO::FETCH_COLUMN);
+
+    $random_ids = array_rand($ids, 10);
+
+    $query_ids = implode(',', array_fill(0, count($random_ids), '?'));
+    $sql = 'select * from users where id in (' . $query_ids . ')';
+    $sth = $con->prepare($sql);
+    $sth->execute($random_ids);
     $users = $sth->fetchAll();
     return $this->view->render($response,'exercise_part6.twig',['title' => 'オススメユーザ','users' => $users]);
 });
