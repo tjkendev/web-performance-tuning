@@ -96,8 +96,9 @@ $app->get('/1day/chapter4',function($request,$response,$args) {
 
 $app->get('/1day/chapter5/preprocessing', function($request, $response, $args) {
     $con = $this->get('pdo');
-    $sql = 'drop table if exists avg_age';
-    $sth = $con->prepare($sql);
+    $sth = $con->prepare('alter table users add index sex_birthday(sex, birthday)');
+    $sth->execute();
+    $sth = $con->prepare('drop table if exists avg_age');
     $sth->execute();
     $sql = 'create table avg_age (
                 select sex, avg(TIMESTAMPDIFF(YEAR, birthday, CURDATE())) AS avg_age from users group by sex
