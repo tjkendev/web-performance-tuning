@@ -74,7 +74,7 @@ $app->get('/1day/chapter4',function($request,$response,$args) {
     echo "バッチ処理insert 成功!";
 });
 
-$app->get('/1day/chapter5/batch', function($request, $response, $args) {
+$app->get('/1day/chapter5/preprocessing', function($request, $response, $args) {
     $con = $this->get('pdo');
     $sql = 'drop table if exists avg_age';
     $sth = $con->prepare($sql);
@@ -84,7 +84,7 @@ $app->get('/1day/chapter5/batch', function($request, $response, $args) {
             )';
     $sth = $con->prepare($sql);
     $sth->execute();
-    echo "batch has finished!";
+    echo "Preprocessing has been completed!";
 });
 
 $app->get('/1day/chapter5',function($request,$response,$args) {
@@ -94,7 +94,7 @@ $app->get('/1day/chapter5',function($request,$response,$args) {
     $check = $con->prepare('show tables like "avg_age"');
     $check->execute();
     if($check->rowCount() == 0) {
-        echo "You need to access <a href=\"/1day/chapter5/batch\">/1day/chapter5/batch</a>";
+        echo "You need to access <a href=\"/1day/chapter5/preprocessing\">/1day/chapter5/preprocessing</a>";
         return;
     }
 
@@ -145,16 +145,32 @@ $app->get('/1day/chapter7',function($request,$response,$args) {
     return $this->view->render($response,'exercise_part7.twig',['title' => $id . 'さんのタイムライン','time_lines' => $time_lines]);
 });
 
+$app->get('/1day/chapter8/preprocessing',function($request,$response,$args) {
+    $con = $this->get('pdo');
+    $check = $con->prepare('show index from users where key_name = "sex_birthday"');
+    $check->execute();
+    if($check->rowCount() == 0) {
+        $sth = $con->prepare('alter table users add index sex_birthday(sex, birthday)');
+        $sth->execute();
+        echo "Preprocessing has been completed!";
+    } else {
+        echo "No preprocessing has been executed.";
+    }
+});
+
 $app->get('/1day/chapter8',function($request,$response,$args) {
     $con = $this->get('pdo');
-    $sql = '
-            select count(*) as cnt 
-            from users a 
-            where TIMESTAMPDIFF(YEAR,a.birthday,CURDATE()) >
-              (select avg(TIMESTAMPDIFF(YEAR,b.birthday,CURDATE())) AS age
-               from users b
-               where b.sex = a.sex)
-            and a.sex = ?';
+    $check = $con->prepare('show tables like "avg_age"');
+    $check->execute();
+    if($check->rowCount() == 0) {
+        echo "You need to access <a href=\"/1day/chapter5/preprocessing\">/1day/chapter5/preprocessing</a>";
+        return;
+    }
+
+    $sql = 'select count(id) as cnt from users, avg_age
+            where TIMESTAMPDIFF(YEAR, birthday, CURDATE()) > avg_age.avg_age
+            and users.sex = avg_age.sex
+            and users.sex = ?';
     $sth = $con->prepare($sql);
     $sth->execute(array(0));
     $result = $sth->fetch(PDO::FETCH_BOTH);
