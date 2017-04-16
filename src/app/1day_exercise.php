@@ -74,19 +74,35 @@ $app->get('/1day/chapter4',function($request,$response,$args) {
     echo "バッチ処理insert 成功!";
 });
 
+$app->get('/1day/chapter5/batch', function($request, $response, $args) {
+    $con = $this->get('pdo');
+    $sql = 'drop table if exists avg_age';
+    $sth = $con->prepare($sql);
+    $sth->execute();
+    $sql = 'create table avg_age (
+                select sex, avg(TIMESTAMPDIFF(YEAR, birthday, CURDATE())) AS avg_age from users group by sex
+            )';
+    $sth = $con->prepare($sql);
+    $sth->execute();
+    echo "batch has finished!";
+});
+
 $app->get('/1day/chapter5',function($request,$response,$args) {
     $id = mt_rand(1,100000);
 
     $con = $this->get('pdo');
+    $check = $con->prepare('show tables like "avg_age"');
+    $check->execute();
+    if($check->rowCount() == 0) {
+        echo "You need to access <a href=\"/1day/chapter5/batch\">/1day/chapter5/batch</a>";
+        return;
+    }
+
     $message = "キャンペーン中!!";
-    $sql = '
-            select count(*) as cnt
-            from users a
-            where TIMESTAMPDIFF(YEAR,a.birthday,CURDATE()) >
-              (select avg(TIMESTAMPDIFF(YEAR,b.birthday,CURDATE())) AS age
-               from users b
-               where a.sex = b.sex)
-            and a.id = :id';
+    $sql = 'select count(*) as cnt from users, avg_age
+            where TIMESTAMPDIFF(YEAR, birthday, CURDATE()) > avg_age.avg_age
+            and users.sex = avg_age.sex
+            and users.id = :id';
     $sth = $con->prepare($sql);
     $sth->bindValue(':id', (int)$id, PDO::PARAM_INT);
     $sth->execute();
